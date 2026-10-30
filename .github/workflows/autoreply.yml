@@ -1,0 +1,37 @@
+name: Ajaira Gyan auto-reply
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"      # every 10 minutes (GitHub may delay a few minutes at busy times)
+  workflow_dispatch: {}          # "Run workflow" button for manual tests
+
+concurrency:
+  group: autoreply
+  cancel-in-progress: false      # never run two at once (avoids double replies)
+
+jobs:
+  reply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Check which account the token belongs to
+        env:
+          T: ${{ secrets.FB_PAGE_TOKEN }}
+        run: curl -s "https://graph.facebook.com/v26.0/me?fields=id,name" -H "Authorization: Bearer $T"; echo
+      - name: Reply to new comments
+        env:
+          FB_PAGE_ID: ${{ secrets.FB_PAGE_ID }}
+          FB_PAGE_TOKEN: ${{ secrets.FB_PAGE_TOKEN }}
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+          AI_PROVIDER: ${{ vars.AI_PROVIDER || 'gemini' }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL || 'gemini-3.8-flash' }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          DRY_RUN: ${{ vars.DRY_RUN || 'false' }}
+          MIN_AGE_MINUTES: ${{ vars.MIN_AGE_MINUTES || '0' }}
+        run: python autoreply.py
