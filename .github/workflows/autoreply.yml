@@ -2,7 +2,9 @@ name: Ajaira Gyan auto-reply
 
 on:
   schedule:
-    - cron: "*/10 * * * *"      # every 10 minutes (GitHub may delay a few minutes at busy times)
+    - cron: "*/15 * * * *"      # GitHub often starts these late; each run then polls for ~45 min
+  push:
+    branches: [main]            # one quick pass after every change, to test it right away
   workflow_dispatch: {}          # "Run workflow" button for manual tests
 
 concurrency:
@@ -12,7 +14,7 @@ concurrency:
 jobs:
   reply:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 55
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -21,13 +23,26 @@ jobs:
       - run: pip install -r requirements.txt
       - name: Reply to new comments
         env:
+          # Ajaira Gyan
           FB_PAGE_ID: ${{ secrets.FB_PAGE_ID }}
           FB_PAGE_TOKEN: ${{ secrets.FB_PAGE_TOKEN }}
           IG_USER_ID: ${{ secrets.IG_USER_ID }}
+          # Mon Mechanic
+          MM_FB_PAGE_ID: ${{ secrets.MM_FB_PAGE_ID }}
+          MM_FB_PAGE_TOKEN: ${{ secrets.MM_FB_PAGE_TOKEN }}
+          MM_IG_USER_ID: ${{ secrets.MM_IG_USER_ID }}
+          # Doodle Logic
+          DL_FB_PAGE_ID: ${{ secrets.DL_FB_PAGE_ID }}
+          DL_FB_PAGE_TOKEN: ${{ secrets.DL_FB_PAGE_TOKEN }}
+          DL_IG_USER_ID: ${{ secrets.DL_IG_USER_ID }}
+          # AI
           AI_PROVIDER: ${{ vars.AI_PROVIDER || 'gemini' }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GEMINI_MODEL: ${{ vars.GEMINI_MODEL || 'gemini-3.8-flash' }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Behaviour
           DRY_RUN: ${{ vars.DRY_RUN || 'false' }}
           MIN_AGE_MINUTES: ${{ vars.MIN_AGE_MINUTES || '0' }}
+          RUN_MINUTES: ${{ github.event_name == 'schedule' && '45' || '0' }}
+          POLL_SECONDS: "150"
         run: python autoreply.py

@@ -1,6 +1,6 @@
-# Ajaira Gyan — Auto Comment Reply (Facebook + Instagram)
+# Auto Comment Reply — Ajaira Gyan, Mon Mechanic, Doodle Logic (Facebook + Instagram)
 
-Every ~10 minutes, this checks comments on your last 7 days of posts and replies with a short,
+It checks comments on your last 7 days of posts **and reels** (Facebook + Instagram), polling every ~2.5 minutes, and replies with a short,
 natural Bangla/Banglish line written by AI. It skips spam/links, abusive comments, your own comments,
 and anything the page already replied to — so nobody gets two replies.
 
@@ -58,6 +58,29 @@ Runs free on GitHub Actions (your PC can be off). Total setup: ~25 minutes, once
 1. Repo → **Actions** tab → enable workflows if asked → **Ajaira Gyan auto-reply → Run workflow**.
 2. Open the run → see lines like `DRY 'সত্যি নাকি?' -> হ্যাঁ, একদম সত্যি! 🐙`. Nothing is posted in dry-run.
 3. Happy with the replies? Change `DRY_RUN` to `false`. From now it runs every 10 minutes by itself.
+
+---
+
+## Adding Mon Mechanic and Doodle Logic
+Each page needs its own 3 secrets (Settings → Secrets and variables → Actions → New repository secret).
+Get them exactly like Step 3: in Graph API Explorer, when you click **Generate Access Token**, tick **all**
+your pages and Instagram accounts, then run `me/accounts?fields=id,name,access_token,instagram_business_account`
+and copy the values from the row of each page.
+
+| Page | Secrets |
+|---|---|
+| Ajaira Gyan | `FB_PAGE_ID`, `FB_PAGE_TOKEN`, `IG_USER_ID` |
+| Mon Mechanic | `MM_FB_PAGE_ID`, `MM_FB_PAGE_TOKEN`, `MM_IG_USER_ID` |
+| Doodle Logic | `DL_FB_PAGE_ID`, `DL_FB_PAGE_TOKEN`, `DL_IG_USER_ID` |
+
+A page without secrets is skipped, and every run shows a yellow warning naming it, so a page is never
+silently left out. Each run's log ends with a line per page like `AG: FB posts=12 reels=5, IG @ajaira.gyan media=14`.
+
+## When does a run turn red?
+- A page or Instagram account can't be read (token expired, permission missing).
+- A comment is still unanswered 30 minutes after it was posted because of an error (AI down, Meta error).
+  Temporary AI overloads are retried and fall back to other models first.
+GitHub emails you on red runs, so check that email instead of ignoring it.
 
 ---
 
