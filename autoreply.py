@@ -354,6 +354,11 @@ def configured_pages():
             continue
         if not ig_id:
             warnings.append(f"{p['name']}: Instagram NOT connected — add secret {p['prefix']}IG_USER_ID")
+        dup = next((q for q in pages if q["fb_id"] == fb_id), None)
+        if dup:
+            warnings.append(f"{p['name']}: the token saved for it belongs to {dup['name']}'s page, "
+                            f"not {p['name']} — replace {p['prefix']}PAGE_TOKEN with {p['name']}'s own page token")
+            continue
         pages.append({**p, "fb_id": fb_id, "fb_token": fb_token, "ig_id": ig_id})
     return pages, warnings
 
