@@ -323,7 +323,8 @@ def configured_pages():
     pages, warnings = [], []
     found = None
     for p in PAGES:
-        if not os.getenv(p["prefix"] + "FB_PAGE_TOKEN", "").strip():
+        if not (os.getenv(p["prefix"] + "FB_PAGE_TOKEN", "").strip()
+                or os.getenv(p["prefix"] + "PAGE_TOKEN", "").strip()):
             if found is None:
                 found = discover_pages({os.getenv(q["prefix"] + "FB_PAGE_TOKEN", "").strip()
                                         for q in PAGES} - {""})
@@ -334,11 +335,22 @@ def configured_pages():
                     warnings.append(f"{p['name']}: no Instagram account linked to this Facebook page")
                 continue
         fb_id = os.getenv(p["prefix"] + "FB_PAGE_ID", "").strip()
-        fb_token = os.getenv(p["prefix"] + "FB_PAGE_TOKEN", "").strip()
+        fb_token = (os.getenv(p["prefix"] + "FB_PAGE_TOKEN", "").strip()
+                    or os.getenv(p["prefix"] + "PAGE_TOKEN", "").strip())
         ig_id = os.getenv(p["prefix"] + "IG_USER_ID", "").strip()
+        if fb_token and (not fb_id or not ig_id):
+            # Only the page token is required: look up the page ID and linked Instagram ID.
+            try:
+                me = graph_get(fb_token, "me", fields="id,name,instagram_business_account")
+                fb_id = fb_id or me.get("id", "")
+                ig_id = ig_id or (me.get("instagram_business_account") or {}).get("id", "")
+                print(f"   {p['key']}: token belongs to page '{me.get('name')}'")
+            except Exception as e:
+                warnings.append(f"{p['name']}: token doesn't work — {str(e)[:150]}")
+                continue
         if not (fb_id and fb_token):
             warnings.append(f"{p['name']} is NOT connected — add secrets "
-                            f"{p['prefix']}FB_PAGE_ID, {p['prefix']}FB_PAGE_TOKEN, {p['prefix']}IG_USER_ID")
+                            f"{p['prefix']}PAGE_TOKEN (that page's own page token)")
             continue
         if not ig_id:
             warnings.append(f"{p['name']}: Instagram NOT connected — add secret {p['prefix']}IG_USER_ID")

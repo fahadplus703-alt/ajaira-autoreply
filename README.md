@@ -70,8 +70,8 @@ and copy the values from the row of each page.
 | Page | Secrets |
 |---|---|
 | Ajaira Gyan | `FB_PAGE_ID`, `FB_PAGE_TOKEN`, `IG_USER_ID` |
-| Mon Mechanic | `MM_FB_PAGE_ID`, `MM_FB_PAGE_TOKEN`, `MM_IG_USER_ID` |
-| Doodle Logic | `DL_FB_PAGE_ID`, `DL_FB_PAGE_TOKEN`, `DL_IG_USER_ID` |
+| Mon Mechanic | `MM_PAGE_TOKEN` (page ID + Instagram are found automatically) |
+| Doodle Logic | `DL_PAGE_TOKEN` (page ID + Instagram are found automatically) |
 
 A page without secrets is skipped, and every run shows a yellow warning naming it, so a page is never
 silently left out. Each run's log ends with a line per page like `AG: FB posts=12 reels=5, IG @ajaira.gyan media=14`.
