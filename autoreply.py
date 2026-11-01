@@ -293,9 +293,46 @@ def instagram_reply(page, comment_id, text):
 
 
 # ---------------------------------------------------------------- main
+def discover_pages(tokens):
+    """If a saved token is a USER token (not a page token), list every page it manages,
+    with each page's own token and linked Instagram account. Returns {name_lower: (id, token, ig)}."""
+    found = {}
+    for tok in tokens:
+        try:
+            for a in graph_list(tok, "me/accounts", 100,
+                                fields="id,name,access_token,instagram_business_account", limit=100):
+                ig = (a.get("instagram_business_account") or {}).get("id", "")
+                found[a.get("name", "").lower()] = (a["id"], a.get("access_token", ""), ig)
+        except Exception as e:
+            print(f"   (auto-detect: this token can't list pages — {str(e)[:120]})")
+    if found:
+        print("   auto-detected pages: " + ", ".join(found))
+    return found
+
+
+def match_discovered(page, found):
+    keys = {"AG": ["ajaira", "আজাইরা"], "MM": ["mon mechanic", "মন মেকানিক", "mechanic"],
+            "DL": ["doodle logic", "doodle"]}[page["key"]]
+    for name, val in found.items():
+        if any(k in name for k in keys) and val[1]:
+            return val
+    return None
+
+
 def configured_pages():
     pages, warnings = [], []
+    found = None
     for p in PAGES:
+        if not os.getenv(p["prefix"] + "FB_PAGE_TOKEN", "").strip():
+            if found is None:
+                found = discover_pages({os.getenv(q["prefix"] + "FB_PAGE_TOKEN", "").strip()
+                                        for q in PAGES} - {""})
+            hit = match_discovered(p, found)
+            if hit:
+                pages.append({**p, "fb_id": hit[0], "fb_token": hit[1], "ig_id": hit[2]})
+                if not hit[2]:
+                    warnings.append(f"{p['name']}: no Instagram account linked to this Facebook page")
+                continue
         fb_id = os.getenv(p["prefix"] + "FB_PAGE_ID", "").strip()
         fb_token = os.getenv(p["prefix"] + "FB_PAGE_TOKEN", "").strip()
         ig_id = os.getenv(p["prefix"] + "IG_USER_ID", "").strip()
